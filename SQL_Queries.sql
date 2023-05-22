@@ -488,4 +488,152 @@ Most common approach?
 Link Primary Key to FOREIGN KEY.
 */
 
+/*
+video 102
+Inner Join
+
+If you have a columns that links the column from table A to table B you can use an inner join.
+In other words finds the match.
+Example:
+SELECT a.emp_no,
+       CONCAT(a.first_name, a.last_name) as "name",
+FROM employees as a
+-- we link salaries on employee number, this is similiar to using where
+INNER JOIN salaries as b ON b.emp_no = a.emp_no
+-- remember results come back unsorted
+ORDER BY a.emp_no ASC;
+
+Difference between WHERE and INNER JOIN:
+The inner join syntax is generally considered a best practice, it's more readable than using
+the WHERE syntax, it shows you what's being joined
+
+Curveball
+What if we only want to know the raises from a promotion?
+SELECT a.emp_no,
+       CONCAT(a.first_name, a.last_name) as "name",
+       b.salary,
+       c.title,
+       c.from_date AS "promoted on"
+FROM employees AS a
+INNER JOIN salaries AS b ON a.emp_no = b.emp_no
+INNER JOIN titles AS c ON c.emp_no = a.emp_no
+AND c.from_date = (b.from_date + interval '2 days')
+ORDER BY a.emp_no;       
+
+Problem: You want to know the original salary and also know the salary at a promotion
+SELECT a.emp_no,
+       CONCAT(a.first_name, a.last_name) as "name",
+       b.salary,
+       c.title,
+       c.from_date AS "promoted on"
+FROM employees AS a
+INNER JOIN salaries AS b ON a.emp_no = b.emp_no
+INNER JOIN titles AS c 
+ON c.emp_no = a.emp_no AND (
+    c.from_date = (b.from_date + interval '2 days') OR
+    c.from_date = b.from_date
+)
+ORDER BY a.emp_no;  
+
+Note: INNER JOINS can become more complicated as you add more tables that you want to combine.
+*/
+
+/*
+video 103
+Self Join
+This usually can be done when a table has a FOREIGN KEY referencing its primary key.
+
+Problem: What if we want to see the supervisors name?
+SELECT a.id, a.name as "employee", b.name as "supervisor name"
+FROM employee as a, employee as b
+WHERE a.supervisorId = b.id;
+
+SELF JOINS ARE similiar to INNER JOINS
+*/
+
+/*
+video 104
+Outer Join
+
+What if I also need the rows that don't match?
+OUTTER JOINS add the data that don't have a match
+
+Two types of OUTTER JOIN:
+LEFT JOINS add the data that don't have a match from table A.
+SYNTAX:
+SELECT *
+FROM <table A> AS a 
+-- it can include "OUTTER" or can be excluded
+LEFT [OUTER] JOIN <table B> AS b
+on a.id = b.id;
+
+LEFT OUTTER JOIN: any value that does not match is made to be null
+
+Problem: You want to know how many employees aren't managers?
+SELECT COUNT(emp.emp_no)
+FROM employees AS emp
+-- we get all the people that aren't dep managers
+LEFT JOIN dept_manager AS dep ON emp.emp_no = dep.emp_no
+-- filter all the ones that are null
+WHERE dep.emp_no IS NULL;
+
+Problem: You want to know every salary raise and also know which ones were a promotion:
+SELECT a.emp_no,
+       CONCAT(a.first_name, a.last_name) as "name",
+       b.salary,
+       COALESCE(c.title, 'No title change') AS "title",
+       COALESCE(c.from_date::text, '-') AS "title taken on"
+FROM employees AS a
+INNER JOIN salaries AS b ON a.emp_no = b.emp_no
+LEFT JOIN titles AS c
+ON c.emp_no = a.emp_no AND (
+    c.from_date = (b.from_date + interval '2 days') OR
+    c.from_date = b.from_date
+)
+ORDER BY a.emp_no;
+
+RIGHT OUTER JOIN:
+syntax:
+SELECT *
+FROM <table A> AS a
+-- the "[]" means that Outer does not have to be added
+RIGHT [OUTER] JOIN <table B> as b
+ON a.id = b.id; 
+
+REMEMBER: ANY VALUE THAT DOES NOT MATCH IS MADE NULL
+*/
+
+/*
+video 105
+Less common JOINS
+
+There are more JOIN techniques they just aren't used that often
+
+CROSS JOIN
+Create a combination of every row.
+This is also known as cartesian data because it is joined together
+
+FULL OUTER JOIN
+Return results from both whether they match or not.
+*/
+
+/*
+video 107
+Using Keywords
+
+Using simplifying the JOIN syntax
+You can substitute the "ON" with "USING" for optimization
+USING keyword are used for PRIMARY to FOREIGN KEY 
+Example 1:
+SELECT e.emp_no, e.first_name, de.dept_no
+FROM employees AS e
+INNER JOIN dept_emp AS de USING(emp_no);
+
+Example 2:
+SELECT e.emp_no, e.first_name, d.dept_name
+FROM employees AS e
+INNER JOIN dept_emp AS de USING(emp_no)
+INNER JOIN departments AS d USING (dept_no)
+*/
+
 
